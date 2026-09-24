@@ -5,19 +5,16 @@ namespace App\Models;
 use App\Enums\UserRole;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasFactory, Notifiable;
+    use HasFactory, HasUuids, Notifiable;
 
-    /**
-     * Attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -26,21 +23,11 @@ class User extends Authenticatable implements FilamentUser
         'is_active',
     ];
 
-    /**
-     * Attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -51,33 +38,21 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-    /**
-     * Determine whether the user is an admin.
-     */
     public function isAdmin(): bool
     {
         return $this->role === UserRole::ADMIN;
     }
 
-    /**
-     * Determine whether the user is a technician.
-     */
     public function isTechnician(): bool
     {
         return $this->role === UserRole::TEKNISI;
     }
 
-    /**
-     * Determine whether the user account is active.
-     */
     public function isActive(): bool
     {
         return $this->is_active;
     }
 
-    /**
-     * Determine whether the user can access a Filament panel.
-     */
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() !== 'admin') {
@@ -93,5 +68,13 @@ class User extends Authenticatable implements FilamentUser
                 ],
                 true,
             );
+    }
+
+    public function technicianAssignments(): HasMany
+    {
+        return $this->hasMany(
+            UnitAssignment::class,
+            'technician_id'
+        );
     }
 }
