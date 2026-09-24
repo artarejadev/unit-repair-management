@@ -14,6 +14,8 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
+use App\Filament\Resources\Trips\TripResource;
+
 class TripsRelationManager extends RelationManager
 {
     protected static string $relationship = 'trips';
@@ -45,6 +47,11 @@ class TripsRelationManager extends RelationManager
     {
         return $table
             ->defaultSort('trip_date', 'desc')
+            ->recordUrl(
+                fn ($record) => TripResource::getUrl('view', [
+                    'record' => $record,
+                ])
+            )
             ->columns([
                 TextColumn::make('trip_date')
                     ->label('Tanggal')
@@ -71,7 +78,6 @@ class TripsRelationManager extends RelationManager
                     ->label('Tambah Trip'),
             ])
             ->recordActions([
-                ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ]);

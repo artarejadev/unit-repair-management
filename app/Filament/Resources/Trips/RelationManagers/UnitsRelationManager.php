@@ -2,19 +2,25 @@
 
 namespace App\Filament\Resources\Trips\RelationManagers;
 
+use App\Enums\UserRole;
 use App\Models\Unit;
+use App\Models\UnitAssignment;
+use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\QueryException;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -32,9 +38,9 @@ class UnitsRelationManager extends RelationManager
             ->components([
                 Textarea::make('imei')
                     ->label('IMEI')
-                    ->rows(3)
                     ->required()
-                    ->helperText('Masukkan satu IMEI untuk setiap unit.'),
+                    ->rows(3)
+                    ->helperText('Masukkan satu IMEI untuk satu unit.'),
             ]);
     }
 
@@ -53,16 +59,23 @@ class UnitsRelationManager extends RelationManager
                     ->badge()
                     ->sortable(),
 
+                TextColumn::make('currentAssignment.technician.name')
+                    ->label('Teknisi')
+                    ->placeholder('Belum di-assign')
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('created_at')
                     ->label('Masuk')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
+
             ->headerActions([
                 CreateAction::make()
                     ->label('Tambah Unit')
-                    ->mutateFormDataUsing(function (array $data, $livewire): array {
-                        $trip = $livewire->getOwnerRecord();
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $trip = $this->getOwnerRecord();
 
                         return [
                             'imei' => trim($data['imei']),
@@ -75,21 +88,18 @@ class UnitsRelationManager extends RelationManager
                 Action::make('bulkCreate')
                     ->label('Bulk IMEI')
                     ->icon('heroicon-o-queue-list')
-                    ->modalHeading('Tambah Banyak Unit')
                     ->schema([
                         Textarea::make('imeis')
                             ->label('Daftar IMEI')
                             ->rows(12)
                             ->required()
                             ->placeholder(
-                                "Masukkan satu IMEI per baris\n\n123456789012345\n123456789012346\n123456789012347"
+                                "123456789012345\n123456789012346\n123456789012347"
                             )
-                            ->helperText(
-                                'Satu baris = satu unit.'
-                            ),
+                            ->helperText('Satu baris = satu unit.'),
                     ])
-                    ->action(function (array $data, $livewire): void {
-                        $trip = $livewire->getOwnerRecord();
+                    ->action(function (array $data): void {
+                        $trip = $this->getOwnerRecord();
 
                         $imeis = preg_split(
                             '/\R/',
@@ -109,57 +119,164 @@ class UnitsRelationManager extends RelationManager
                             ]);
                         }
 
-                        $duplicatesInInput = $imeis
+                        $duplicates = $imeis
                             ->duplicates()
                             ->unique()
                             ->values();
 
-                        if ($duplicatesInInput->isNotEmpty()) {
+                        if ($duplicates->isNotEmpty()) {
                             throw ValidationException::withMessages([
-                                'imeis' => 'Ada IMEI duplikat dalam input: ' .
-                                    $duplicatesInInput->implode(', '),
+                                'imeis' => 'Ada IMEI duplikat: ' .
+                                    $duplicates->implode(', '),
                             ]);
                         }
 
-                        $existingImeis = Unit::query()
+                        $existing = Unit::query()
                             ->whereIn('imei', $imeis->all())
                             ->pluck('imei');
 
-                        if ($existingImeis->isNotEmpty()) {
+                        if ($existing->isNotEmpty()) {
                             throw ValidationException::withMessages([
-                                'imeis' => 'IMEI berikut sudah terdaftar: ' .
-                                    $existingImeis->implode(', '),
+                                'imeis' => 'IMEI sudah terdaftar: ' .
+                                    $existing->implode(', '),
                             ]);
                         }
 
-                        try {
-                            DB::transaction(function () use ($imeis, $trip): void {
-                                foreach ($imeis as $imei) {
-                                    Unit::create([
-                                        'customer_id' => $trip->customer_id,
-                                        'trip_id' => $trip->id,
-                                        'imei' => $imei,
-                                        'status' => 'PENDING',
-                                    ]);
-                                }
-                            });
-                        } catch (QueryException $exception) {
-                            throw ValidationException::withMessages([
-                                'imeis' => 'Sebagian data tidak dapat disimpan. Periksa kembali IMEI dan coba lagi.',
-                            ]);
-                        }
+                        DB::transaction(function () use ($imeis, $trip): void {
+                            foreach ($imeis as $imei) {
+                                Unit::create([
+                                    'customer_id' => $trip->customer_id,
+                                    'trip_id' => $trip->id,
+                                    'imei' => $imei,
+                                    'status' => 'PENDING',
+                                ]);
+                            }
+                        });
 
                         Notification::make()
                             ->title('Unit berhasil ditambahkan')
-                            ->body($imeis->count() . ' unit berhasil masuk ke Trip.')
+                            ->body($imeis->count() . ' unit berhasil dibuat.')
                             ->success()
                             ->send();
                     }),
             ])
+
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
+
+                Action::make('assignTechnician')
+                    ->label('Assign')
+                    ->icon('heroicon-o-user-plus')
+                    ->schema([
+                        Select::make('technician_id')
+                            ->label('Teknisi')
+                            ->options(
+                                fn () => User::query()
+                                    ->where('role', UserRole::TEKNISI->value)
+                                    ->where('is_active', true)
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+
+                        Textarea::make('notes')
+                            ->label('Catatan')
+                            ->rows(3)
+                            ->nullable(),
+                    ])
+                    ->action(function (Unit $record, array $data): void {
+                        DB::transaction(function () use ($record, $data): void {
+                            UnitAssignment::query()
+                                ->where('unit_id', $record->id)
+                                ->whereNull('ended_at')
+                                ->update([
+                                    'ended_at' => now(),
+                                ]);
+
+                            UnitAssignment::create([
+                                'unit_id' => $record->id,
+                                'technician_id' => $data['technician_id'],
+                                'assigned_at' => now(),
+                                'ended_at' => null,
+                                'notes' => $data['notes'] ?? null,
+                            ]);
+                        });
+
+                        Notification::make()
+                            ->title('Teknisi berhasil di-assign')
+                            ->success()
+                            ->send();
+                    }),
+            ])
+
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('assignTechnician')
+                        ->label('Assign Teknisi')
+                        ->icon('heroicon-o-user-plus')
+                        ->schema([
+                            Select::make('technician_id')
+                                ->label('Teknisi')
+                                ->options(
+                                    fn () => User::query()
+                                        ->where(
+                                            'role',
+                                            UserRole::TEKNISI->value
+                                        )
+                                        ->where('is_active', true)
+                                        ->orderBy('name')
+                                        ->pluck('name', 'id')
+                                )
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+
+                            Textarea::make('notes')
+                                ->label('Catatan')
+                                ->rows(3)
+                                ->nullable(),
+                        ])
+                        ->requiresConfirmation()
+                        ->action(function (
+                            Collection $records,
+                            array $data
+                        ): void {
+                            DB::transaction(function () use (
+                                $records,
+                                $data
+                            ): void {
+                                foreach ($records as $unit) {
+                                    UnitAssignment::query()
+                                        ->where('unit_id', $unit->id)
+                                        ->whereNull('ended_at')
+                                        ->update([
+                                            'ended_at' => now(),
+                                        ]);
+
+                                    UnitAssignment::create([
+                                        'unit_id' => $unit->id,
+                                        'technician_id' => $data['technician_id'],
+                                        'assigned_at' => now(),
+                                        'ended_at' => null,
+                                        'notes' => $data['notes'] ?? null,
+                                    ]);
+                                }
+                            });
+
+                            Notification::make()
+                                ->title('Assignment berhasil')
+                                ->body(
+                                    $records->count() .
+                                    ' unit berhasil di-assign.'
+                                )
+                                ->success()
+                                ->send();
+                        }),
+                ]),
             ]);
     }
 }

@@ -58,4 +58,11 @@ class Unit extends Model
     {
         return $this->hasOne(InvoiceUnit::class);
     }
+
+    public function currentAssignment(): HasOne
+    {
+        return $this->hasOne(UnitAssignment::class)
+            ->whereNull('ended_at')
+            ->latestOfMany();
+    }
 }
