@@ -82,4 +82,9 @@ class TripResource extends Resource
             'edit' => EditTrip::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
 }

@@ -16,6 +16,8 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
+use App\Filament\Resources\Customers\RelationManagers\TripsRelationManager;
+
 class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
@@ -62,6 +64,13 @@ class CustomerResource extends Resource
             'create' => CreateCustomer::route('/create'),
             'view' => ViewCustomer::route('/{record}'),
             'edit' => EditCustomer::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            TripsRelationManager::class,
         ];
     }
 }
