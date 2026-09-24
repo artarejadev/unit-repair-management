@@ -17,6 +17,8 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
+use App\Filament\Resources\Trips\RelationManagers\UnitsRelationManager;
+
 class TripResource extends Resource
 {
     protected static ?string $model = Trip::class;
@@ -86,5 +88,12 @@ class TripResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         return false;
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            UnitsRelationManager::class,
+        ];
     }
 }

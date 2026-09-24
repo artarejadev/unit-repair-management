@@ -1,59 +1,80 @@
 <?php
 
-use App\Enums\UserRole;
+namespace Tests\Feature;
+
 use App\Models\RepairType;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
-it('allows admin to manage repair types', function () {
-    $admin = User::factory()->create([
-        'role' => UserRole::ADMIN,
-        'is_active' => true,
-    ]);
+class RepairTypeManagementTest extends TestCase
+{
+    use RefreshDatabase;
 
-    expect($admin->can('viewAny', RepairType::class))
-        ->toBeTrue();
+    public function admin_can_manage_repair_types(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'ADMIN',
+            'is_active' => true,
+        ]);
 
-    expect($admin->can('create', RepairType::class))
-        ->toBeTrue();
+        $this->assertTrue(
+            $admin->can('viewAny', RepairType::class)
+        );
 
-    $repairType = RepairType::create([
-        'name' => 'Ganti LCD',
-        'default_price' => 50000,
-    ]);
+        $this->assertTrue(
+            $admin->can('create', RepairType::class)
+        );
 
-    expect($admin->can('view', $repairType))
-        ->toBeTrue();
+        $repairType = RepairType::create([
+            'name' => 'Ganti LCD',
+            'default_price' => 50000,
+        ]);
 
-    expect($admin->can('update', $repairType))
-        ->toBeTrue();
+        $this->assertTrue(
+            $admin->can('view', $repairType)
+        );
 
-    expect($admin->can('delete', $repairType))
-        ->toBeTrue();
-});
+        $this->assertTrue(
+            $admin->can('update', $repairType)
+        );
 
-it('does not allow technician to manage repair types', function () {
-    $technician = User::factory()->create([
-        'role' => UserRole::TEKNISI,
-        'is_active' => true,
-    ]);
+        $this->assertTrue(
+            $admin->can('delete', $repairType)
+        );
+    }
 
-    $repairType = RepairType::create([
-        'name' => 'Ganti LCD',
-        'default_price' => 50000,
-    ]);
+    public function technician_cannot_manage_repair_types(): void
+    {
+        $technician = User::factory()->create([
+            'role' => 'TEKNISI',
+            'is_active' => true,
+        ]);
 
-    expect($technician->can('viewAny', RepairType::class))
-        ->toBeFalse();
+        $repairType = RepairType::create([
+            'name' => 'Ganti LCD',
+            'default_price' => 50000,
+        ]);
 
-    expect($technician->can('view', $repairType))
-        ->toBeFalse();
+        $this->assertFalse(
+            $technician->can('viewAny', RepairType::class)
+        );
 
-    expect($technician->can('create', RepairType::class))
-        ->toBeFalse();
+        $this->assertFalse(
+            $technician->can('view', $repairType)
+        );
 
-    expect($technician->can('update', $repairType))
-        ->toBeFalse();
+        $this->assertFalse(
+            $technician->can('create', RepairType::class)
+        );
 
-    expect($technician->can('delete', $repairType))
-        ->toBeFalse();
-});
+        $this->assertFalse(
+            $technician->can('update', $repairType)
+        );
+
+        $this->assertFalse(
+            $technician->can('delete', $repairType)
+        );
+    }
+}
