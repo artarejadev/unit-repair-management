@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+use App\Models\User;
+
 class Unit extends Model
 {
     use HasFactory, HasUuids;
@@ -64,5 +66,12 @@ class Unit extends Model
         return $this->hasOne(UnitAssignment::class)
             ->whereNull('ended_at')
             ->latestOfMany();
+    }
+
+    public function isAssignedTo(User $user): bool
+    {
+        return $this->currentAssignment()
+            ->where('technician_id', $user->id)
+            ->exists();
     }
 }

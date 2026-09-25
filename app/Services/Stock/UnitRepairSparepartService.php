@@ -34,6 +34,11 @@ class UnitRepairSparepartService
                 ->lockForUpdate()
                 ->findOrFail($unitRepair->id);
 
+            $this->ensureCanManage(
+                unitRepair: $lockedRepair,
+                user: $user ?? auth()->user(),
+            );
+
             $lockedSparepart = Sparepart::query()
                 ->lockForUpdate()
                 ->findOrFail($sparepart->id);
@@ -81,6 +86,11 @@ class UnitRepairSparepartService
                 ])
                 ->lockForUpdate()
                 ->findOrFail($unitSparepart->id);
+
+            $this->ensureCanManage(
+                unitRepair: $usage->unitRepair,
+                user: $user ?? auth()->user(),
+            );
 
             $oldSparepart = Sparepart::query()
                 ->lockForUpdate()
@@ -188,6 +198,11 @@ class UnitRepairSparepartService
                 ->lockForUpdate()
                 ->findOrFail($unitSparepart->id);
 
+            $this->ensureCanManage(
+                unitRepair: $usage->unitRepair,
+                user: $user ?? auth()->user(),
+            );
+
             $remainingQuantity = $usage->remaining_quantity;
 
             if ($remainingQuantity > 0) {
@@ -270,6 +285,11 @@ class UnitRepairSparepartService
                 ->lockForUpdate()
                 ->findOrFail($unitSparepart->id);
 
+            $this->ensureCanManage(
+                unitRepair: $usage->unitRepair,
+                user: $user ?? auth()->user(),
+            );
+
             $remainingQuantity = $usage->remaining_quantity;
 
             if ($quantity > $remainingQuantity) {
@@ -290,5 +310,33 @@ class UnitRepairSparepartService
 
             return $usage->refresh();
         });
+    }
+
+    private function ensureCanManage(
+        UnitRepair $unitRepair,
+        ?User $user
+    ): void {
+        $user ??= auth()->user();
+
+        if (! $user) {
+            throw new \Illuminate\Auth\Access\AuthorizationException(
+                'User tidak terautentikasi.'
+            );
+        }
+
+        if ($user->isAdmin()) {
+            return;
+        }
+
+        if (
+            $user->isTechnician()
+            && $unitRepair->unit?->isAssignedTo($user)
+        ) {
+            return;
+        }
+
+        throw new \Illuminate\Auth\Access\AuthorizationException(
+            'Anda tidak memiliki akses ke Unit Repair ini.'
+        );
     }
 }

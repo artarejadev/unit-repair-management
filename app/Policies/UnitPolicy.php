@@ -9,12 +9,17 @@ class UnitPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isTechnician();
     }
 
     public function view(User $user, Unit $unit): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isTechnician()
+            && $unit->isAssignedTo($user);
     }
 
     public function create(User $user): bool

@@ -9,31 +9,46 @@ class UnitSparepartPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isTechnician();
     }
 
     public function view(User $user, UnitSparepart $unitSparepart): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isTechnician()
+            && $unitSparepart->unitRepair?->unit?->isAssignedTo($user);
     }
 
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isTechnician();
     }
 
     public function update(User $user, UnitSparepart $unitSparepart): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isTechnician()
+            && $unitSparepart->unitRepair?->unit?->isAssignedTo($user);
     }
 
     public function delete(User $user, UnitSparepart $unitSparepart): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isTechnician()
+            && $unitSparepart->unitRepair?->unit?->isAssignedTo($user);
     }
 
     public function deleteAny(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isTechnician();
     }
 }

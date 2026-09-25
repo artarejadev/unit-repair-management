@@ -14,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
 use App\Filament\Resources\Units\Pages\ListUnits;
+use Illuminate\Database\Eloquent\Builder;
 
 class UnitResource extends Resource
 {
@@ -22,7 +23,7 @@ class UnitResource extends Resource
     protected static string|BackedEnum|null $navigationIcon =
         'heroicon-o-device-phone-mobile';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Operasional';
+    protected static string | \UnitEnum | null $navigationGroup = 'Pekerjaan Teknisi';
 
     protected static ?string $modelLabel = 'Unit';
 
@@ -32,7 +33,7 @@ class UnitResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return auth()->user()?->isTechnician() ?? false;
     }
 
     public static function form(Schema $schema): Schema
@@ -59,5 +60,27 @@ class UnitResource extends Resource
             'view' => ViewUnit::route('/{record}'),
             'edit' => EditUnit::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if ($user?->isTechnician()) {
+            $query->whereHas('assignments', function (Builder $assignmentQuery) use ($user): void {
+                $assignmentQuery
+                    ->where('technician_id', $user->id)
+                    ->whereNull('ended_at');
+            });
+        }
+
+        return $query;
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Unit Saya';
     }
 }

@@ -175,4 +175,9 @@ class SparepartsRelationManager extends RelationManager
             ])
             ->toolbarActions([]);
     }
+
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
 }

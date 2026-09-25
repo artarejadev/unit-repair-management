@@ -9,12 +9,17 @@ class UnitRepairPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isTechnician();
     }
 
     public function view(User $user, UnitRepair $unitRepair): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isTechnician()
+            && $unitRepair->unit?->isAssignedTo($user);
     }
 
     public function create(User $user): bool
