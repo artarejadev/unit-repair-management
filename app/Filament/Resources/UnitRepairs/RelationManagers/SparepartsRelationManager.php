@@ -15,6 +15,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
+use Filament\Actions\Action;
+
 class SparepartsRelationManager extends RelationManager
 {
     protected static string $relationship = 'spareparts';
@@ -61,11 +63,23 @@ class SparepartsRelationManager extends RelationManager
                     ->sortable(),
 
                 TextColumn::make('quantity')
-                    ->label('Qty')
+                    ->label('Digunakan')
+                    ->sortable(),
+
+                TextColumn::make('returned_quantity')
+                    ->label('Dikembalikan')
+                    ->sortable(),
+
+                TextColumn::make('remaining_quantity')
+                    ->label('Masih Digunakan')
+                    ->state(
+                        fn (UnitSparepart $record): int =>
+                            $record->remaining_quantity
+                    )
                     ->sortable(),
 
                 TextColumn::make('created_at')
-                    ->label('Digunakan')
+                    ->label('Ditambahkan')
                     ->dateTime('d M Y H:i')
                     ->sortable(),
             ])
@@ -119,6 +133,42 @@ class SparepartsRelationManager extends RelationManager
                     ->action(function (UnitSparepart $record): void {
                         app(UnitRepairSparepartService::class)->delete(
                             unitSparepart: $record,
+                            user: auth()->user(),
+                        );
+                    }),
+
+                Action::make('return')
+                    ->label('Kembalikan')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('warning')
+                    ->visible(
+                        fn (UnitSparepart $record): bool =>
+                            $record->remaining_quantity > 0
+                    )
+                    ->schema([
+                        TextInput::make('quantity')
+                            ->label('Qty Dikembalikan')
+                            ->numeric()
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(
+                                fn (UnitSparepart $record): int =>
+                                    $record->remaining_quantity
+                            )
+                            ->default(
+                                fn (UnitSparepart $record): int =>
+                                    $record->remaining_quantity
+                            )
+                            ->required(),
+                    ])
+                    ->requiresConfirmation()
+                    ->action(function (
+                        UnitSparepart $record,
+                        array $data,
+                    ): void {
+                        app(UnitRepairSparepartService::class)->returnStock(
+                            unitSparepart: $record,
+                            quantity: (int) $data['quantity'],
                             user: auth()->user(),
                         );
                     }),

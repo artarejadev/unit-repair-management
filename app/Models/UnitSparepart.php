@@ -17,6 +17,7 @@ class UnitSparepart extends Model
         'unit_id',
         'sparepart_id',
         'quantity',
+        'returned_quantity',
         'unit_price',
         'notes',
     ];
@@ -25,6 +26,7 @@ class UnitSparepart extends Model
     {
         return [
             'quantity' => 'integer',
+            'returned_quantity' => 'integer',
             'unit_price' => 'decimal:2',
         ];
     }
@@ -52,5 +54,13 @@ class UnitSparepart extends Model
     public function unitRepair(): BelongsTo
     {
         return $this->belongsTo(UnitRepair::class);
+    }
+
+    public function getRemainingQuantityAttribute(): int
+    {
+        return max(
+            0,
+            (int) $this->quantity - (int) $this->returned_quantity
+        );
     }
 }

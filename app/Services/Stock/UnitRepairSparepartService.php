@@ -50,6 +50,7 @@ class UnitRepairSparepartService
                 'unit_id' => $lockedRepair->unit_id,
                 'sparepart_id' => $lockedSparepart->id,
                 'quantity' => $quantity,
+                'returned_quantity' => 0,
             ]);
         });
     }
@@ -96,7 +97,17 @@ class UnitRepairSparepartService
              * Sparepart tidak berubah, hanya quantity berubah.
              */
             if ($usage->sparepart_id === $newSparepart->id) {
-                $difference = $quantity - (int) $usage->quantity;
+                $oldRemaining = $usage->remaining_quantity;
+
+                $newRemaining = $quantity - (int) $usage->returned_quantity;
+
+                if ($newRemaining < 0) {
+                    throw new InvalidArgumentException(
+                        'Qty tidak boleh lebih kecil dari qty yang sudah dikembalikan.'
+                    );
+                }
+
+                $difference = $newRemaining - $oldRemaining;
 
                 if ($difference > 0) {
                     $this->stockOut(
@@ -166,12 +177,16 @@ class UnitRepairSparepartService
                 ->lockForUpdate()
                 ->findOrFail($unitSparepart->id);
 
-            $this->stockReturn(
-                unitRepair: $usage->unitRepair,
-                sparepart: $usage->sparepart,
-                quantity: (int) $usage->quantity,
-                user: $user,
-            );
+            $remainingQuantity = $usage->remaining_quantity;
+
+            if ($remainingQuantity > 0) {
+                $this->stockReturn(
+                    unitRepair: $usage->unitRepair,
+                    sparepart: $usage->sparepart,
+                    quantity: $remainingQuantity,
+                    user: $user,
+                );
+            }
 
             $usage->delete();
         });
@@ -217,5 +232,52 @@ class UnitRepairSparepartService
                 . $repairName,
             user: $user ?? auth()->user(),
         );
+    }
+
+    public function returnStock(
+        UnitSparepart $unitSparepart,
+        int $quantity,
+        ?User $user = null,
+    ): UnitSparepart {
+        if ($quantity <= 0) {
+            throw new InvalidArgumentException(
+                'Jumlah pengembalian harus lebih dari 0.'
+            );
+        }
+
+        return DB::transaction(function () use (
+            $unitSparepart,
+            $quantity,
+            $user,
+        ): UnitSparepart {
+            $usage = UnitSparepart::query()
+                ->with([
+                    'unitRepair.unit',
+                    'unitRepair.repairType',
+                    'sparepart',
+                ])
+                ->lockForUpdate()
+                ->findOrFail($unitSparepart->id);
+
+            $remainingQuantity = $usage->remaining_quantity;
+
+            if ($quantity > $remainingQuantity) {
+                throw new InvalidArgumentException(
+                    'Jumlah pengembalian melebihi sparepart yang masih digunakan.'
+                );
+            }
+
+            $this->stockReturn(
+                unitRepair: $usage->unitRepair,
+                sparepart: $usage->sparepart,
+                quantity: $quantity,
+                user: $user,
+            );
+
+            $usage->returned_quantity += $quantity;
+            $usage->save();
+
+            return $usage->refresh();
+        });
     }
 }
