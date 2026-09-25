@@ -92,6 +92,16 @@ class UnitRepairSparepartService
 
             $unitRepair = $usage->unitRepair;
 
+            if (
+                $usage->sparepart_id !== $newSparepart->id
+                && (int) $usage->returned_quantity > 0
+            ) {
+                throw new InvalidArgumentException(
+                    'Sparepart tidak dapat diganti setelah sebagian qty dikembalikan. '
+                    . 'Hapus pemakaian lama lalu tambahkan sparepart yang baru.'
+                );
+            }
+
             /*
              * Kasus 1:
              * Sparepart tidak berubah, hanya quantity berubah.
@@ -154,6 +164,7 @@ class UnitRepairSparepartService
 
             $usage->sparepart_id = $newSparepart->id;
             $usage->quantity = $quantity;
+            $usage->returned_quantity = 0;
             $usage->save();
 
             return $usage->refresh();
