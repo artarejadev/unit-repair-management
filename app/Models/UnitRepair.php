@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class UnitRepair extends Model
 {
@@ -82,5 +83,10 @@ class UnitRepair extends Model
     public function getFinalPriceAttribute(): float
     {
         return (float) ($this->override_price ?? $this->price);
+    }
+
+    public function spareparts(): HasMany
+    {
+        return $this->hasMany(UnitSparepart::class);
     }
 }

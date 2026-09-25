@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Filament\Resources\RelationManagers\RelationManager;
 
 use Filament\Forms\Components\TextInput;
+use App\Filament\Resources\UnitRepairs\UnitRepairResource;
 
 class RepairsRelationManager extends RelationManager
 {
@@ -55,6 +56,11 @@ class RepairsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->recordUrl(
+                fn ($record) => UnitRepairResource::getUrl('view', [
+                    'record' => $record,
+                ])
+            )
             ->columns([
                 TextColumn::make('repairType.name')
                     ->label('Jenis Repair')
@@ -113,7 +119,13 @@ class RepairsRelationManager extends RelationManager
                     }),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->label('Edit')
+                    ->url(
+                        fn ($record) => UnitRepairResource::getUrl('edit', [
+                            'record' => $record,
+                        ])
+                    ),
                 DeleteAction::make(),
             ]);
     }

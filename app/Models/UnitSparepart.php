@@ -13,6 +13,7 @@ class UnitSparepart extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
+        'unit_repair_id',
         'unit_id',
         'sparepart_id',
         'quantity',
@@ -23,7 +24,7 @@ class UnitSparepart extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'decimal:3',
+            'quantity' => 'integer',
             'unit_price' => 'decimal:2',
         ];
     }
@@ -46,5 +47,10 @@ class UnitSparepart extends Model
     public function invoiceItems(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function unitRepair(): BelongsTo
+    {
+        return $this->belongsTo(UnitRepair::class);
     }
 }

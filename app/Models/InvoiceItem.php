@@ -25,7 +25,7 @@ class InvoiceItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'decimal:3',
+            'quantity' => 'integer',
             'unit_price' => 'decimal:2',
             'subtotal' => 'decimal:2',
         ];

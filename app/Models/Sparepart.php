@@ -22,7 +22,7 @@ class Sparepart extends Model
     protected function casts(): array
     {
         return [
-            'stock_qty' => 'decimal:3',
+            'stock_qty' => 'integer',
             'is_active' => 'boolean',
         ];
     }
