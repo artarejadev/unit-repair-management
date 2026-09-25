@@ -3,14 +3,9 @@
 namespace App\Filament\Resources\Units\Pages;
 
 use App\Filament\Resources\Units\UnitResource;
-use Filament\Resources\Pages\ListRecords;
+use Filament\Resources\Pages\ViewRecord;
 
-class ListUnits extends ListRecords
+class ViewUnit extends ViewRecord
 {
     protected static string $resource = UnitResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [];
-    }
 }

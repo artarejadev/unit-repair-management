@@ -12,7 +12,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -23,6 +22,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+
+use App\Filament\Resources\Units\UnitResource;
 
 class UnitsRelationManager extends RelationManager
 {
@@ -47,6 +48,11 @@ class UnitsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->recordUrl(
+                fn (Unit $record): string => UnitResource::getUrl('view', [
+                    'record' => $record,
+                ])
+            )
             ->columns([
                 TextColumn::make('imei')
                     ->label('IMEI')
@@ -162,8 +168,12 @@ class UnitsRelationManager extends RelationManager
             ])
 
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()
+                ->url(
+                    fn (Unit $record): string => UnitResource::getUrl('edit', [
+                        'record' => $record,
+                    ])
+                ),
                 DeleteAction::make(),
 
                 Action::make('assignTechnician')
