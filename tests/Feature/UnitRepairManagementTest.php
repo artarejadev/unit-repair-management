@@ -59,7 +59,6 @@ class UnitRepairManagementTest extends TestCase
         ]);
     }
 
-    #[Test]
     public function repair_always_snapshots_current_master_price_when_created(): void
     {
         $customer = $this->createCustomer();
@@ -90,7 +89,6 @@ class UnitRepairManagementTest extends TestCase
         );
     }
 
-    #[Test]
     public function changing_master_price_does_not_change_existing_unit_repair(): void
     {
         $customer = $this->createCustomer();
@@ -127,7 +125,6 @@ class UnitRepairManagementTest extends TestCase
         );
     }
 
-    #[Test]
     public function new_unit_repair_uses_new_master_price(): void
     {
         $customer = $this->createCustomer();
@@ -175,7 +172,6 @@ class UnitRepairManagementTest extends TestCase
         );
     }
 
-    #[Test]
     public function admin_can_set_override_price(): void
     {
         $admin = User::create([
@@ -222,7 +218,6 @@ class UnitRepairManagementTest extends TestCase
         );
     }
 
-    #[Test]
     public function technician_cannot_change_override_price(): void
     {
         $technician = User::create([
@@ -269,7 +264,6 @@ class UnitRepairManagementTest extends TestCase
         ]);
     }
 
-    #[Test]
     public function override_price_does_not_change_master_price(): void
     {
         $admin = User::create([
@@ -319,6 +313,156 @@ class UnitRepairManagementTest extends TestCase
         $this->assertSame(
             '50000.00',
             $repairType->fresh()->default_price
+        );
+    }
+
+    public function admin_can_create_repair_with_override_price(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Override Create',
+            'email' => 'admin-override-create@example.com',
+            'password' => bcrypt('password'),
+            'role' => UserRole::ADMIN,
+            'is_active' => true,
+        ]);
+
+        $customer = $this->createCustomer();
+        $trip = $this->createTrip(
+            $customer,
+            'TRIP-OVERRIDE-CREATE-001'
+        );
+
+        $unit = $this->createUnit(
+            $customer,
+            $trip,
+            '823456789012345'
+        );
+
+        $repairType = $this->createRepairType(
+            'Ganti LCD',
+            50000
+        );
+
+        $this->actingAs($admin);
+
+        $unitRepair = UnitRepair::create([
+            'unit_id' => $unit->id,
+            'repair_type_id' => $repairType->id,
+            'override_price' => 40000,
+        ]);
+
+        $fresh = $unitRepair->fresh();
+
+        $this->assertSame(
+            '50000.00',
+            $fresh->price
+        );
+
+        $this->assertSame(
+            '40000.00',
+            $fresh->override_price
+        );
+
+        $this->assertSame(
+            40000.0,
+            $fresh->final_price
+        );
+    }
+
+    public function snapshot_price_cannot_be_changed_after_creation(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Snapshot Test',
+            'email' => 'admin-snapshot@example.com',
+            'password' => bcrypt('password'),
+            'role' => UserRole::ADMIN,
+            'is_active' => true,
+        ]);
+
+        $customer = $this->createCustomer();
+        $trip = $this->createTrip(
+            $customer,
+            'TRIP-SNAPSHOT-001'
+        );
+
+        $unit = $this->createUnit(
+            $customer,
+            $trip,
+            '923456789012345'
+        );
+
+        $repairType = $this->createRepairType(
+            'Ganti LCD',
+            50000
+        );
+
+        $this->actingAs($admin);
+
+        $unitRepair = UnitRepair::create([
+            'unit_id' => $unit->id,
+            'repair_type_id' => $repairType->id,
+        ]);
+
+        $this->expectException(\LogicException::class);
+
+        $unitRepair->update([
+            'price' => 45000,
+        ]);
+    }
+
+    public function admin_can_remove_override_price(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Remove Override',
+            'email' => 'admin-remove-override@example.com',
+            'password' => bcrypt('password'),
+            'role' => UserRole::ADMIN,
+            'is_active' => true,
+        ]);
+
+        $customer = $this->createCustomer();
+        $trip = $this->createTrip(
+            $customer,
+            'TRIP-REMOVE-OVERRIDE-001'
+        );
+
+        $unit = $this->createUnit(
+            $customer,
+            $trip,
+            '103456789012345'
+        );
+
+        $repairType = $this->createRepairType(
+            'Ganti LCD',
+            50000
+        );
+
+        $this->actingAs($admin);
+
+        $unitRepair = UnitRepair::create([
+            'unit_id' => $unit->id,
+            'repair_type_id' => $repairType->id,
+            'override_price' => 40000,
+        ]);
+
+        $unitRepair->update([
+            'override_price' => null,
+        ]);
+
+        $fresh = $unitRepair->fresh();
+
+        $this->assertNull(
+            $fresh->override_price
+        );
+
+        $this->assertSame(
+            '50000.00',
+            $fresh->price
+        );
+
+        $this->assertSame(
+            50000.0,
+            $fresh->final_price
         );
     }
 }

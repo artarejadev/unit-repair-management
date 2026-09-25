@@ -47,7 +47,7 @@ class RepairsRelationManager extends RelationManager
                         fn (): bool => auth()->user()?->isAdmin() ?? false
                     )
                     ->helperText(
-                        'Kosongkan jika tidak ada harga khusus.'
+                        'Kosongkan jika menggunakan harga snapshot.'
                     ),
             ]);
     }

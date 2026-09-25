@@ -33,21 +33,38 @@ class UnitRepair extends Model
             $repairType = RepairType::query()
                 ->findOrFail($unitRepair->repair_type_id);
 
+            // Harga transaksi selalu snapshot dari Master Repair.
             $unitRepair->price = $repairType->default_price;
-            $unitRepair->override_price = null;
+
+            // Jika create membawa override, hanya Admin yang boleh.
+            if ($unitRepair->override_price !== null) {
+                $user = auth()->user();
+
+                if (! $user || ! $user->isAdmin()) {
+                    throw new \Illuminate\Auth\Access\AuthorizationException(
+                        'Hanya Admin yang dapat mengatur harga override.'
+                    );
+                }
+            }
         });
 
         static::updating(function (UnitRepair $unitRepair): void {
-            if (! $unitRepair->isDirty('override_price')) {
-                return;
+            // Harga snapshot tidak boleh diubah setelah transaksi dibuat.
+            if ($unitRepair->isDirty('price')) {
+                throw new \LogicException(
+                    'Harga snapshot Unit Repair tidak dapat diubah.'
+                );
             }
 
-            $user = auth()->user();
+            // Override hanya boleh diubah oleh Admin.
+            if ($unitRepair->isDirty('override_price')) {
+                $user = auth()->user();
 
-            if (! $user || ! $user->isAdmin()) {
-                throw new AuthorizationException(
-                    'Hanya Admin yang dapat mengubah harga override.'
-                );
+                if (! $user || ! $user->isAdmin()) {
+                    throw new \Illuminate\Auth\Access\AuthorizationException(
+                        'Hanya Admin yang dapat mengubah harga override.'
+                    );
+                }
             }
         });
     }
