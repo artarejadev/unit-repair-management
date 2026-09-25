@@ -32,6 +32,11 @@ class Sparepart extends Model
         return $this->hasMany(UnitSparepart::class);
     }
 
+    public function unitSpareparts()
+    {
+        return $this->hasMany(UnitSparepart::class);
+    }
+
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
