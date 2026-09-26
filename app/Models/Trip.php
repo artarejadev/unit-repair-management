@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use App\Enums\UnitStatus;
+
 class Trip extends Model
 {
     use HasFactory, HasUuids;
@@ -39,5 +41,12 @@ class Trip extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public function billingUnits()
+    {
+        return $this->hasMany(Unit::class)
+            ->where('status', UnitStatus::SELESAI)
+            ->whereDoesntHave('invoiceUnit');
     }
 }
