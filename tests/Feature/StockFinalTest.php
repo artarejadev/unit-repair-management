@@ -79,7 +79,6 @@ class StockFinalTest extends TestCase
         ]);
     }
 
-    #[Test]
     public function stock_in_out_and_return_keep_balance_correct(): void
     {
         $admin = $this->createAdmin('-basic');
@@ -122,7 +121,6 @@ class StockFinalTest extends TestCase
         $this->assertDatabaseCount('stock_movements', 3);
     }
 
-    #[Test]
     public function partial_return_never_returns_more_than_remaining_quantity(): void
     {
         $admin = $this->createAdmin('-partial');
@@ -178,7 +176,6 @@ class StockFinalTest extends TestCase
         );
     }
 
-    #[Test]
     public function editing_quantity_up_only_reduces_stock_by_difference(): void
     {
         $admin = $this->createAdmin('-edit-up');
@@ -227,7 +224,6 @@ class StockFinalTest extends TestCase
         );
     }
 
-    #[Test]
     public function editing_quantity_down_returns_only_the_difference(): void
     {
         $admin = $this->createAdmin('-edit-down');
@@ -276,7 +272,6 @@ class StockFinalTest extends TestCase
         );
     }
 
-    #[Test]
     public function deleting_usage_returns_only_remaining_quantity(): void
     {
         $admin = $this->createAdmin('-delete');
@@ -334,7 +329,6 @@ class StockFinalTest extends TestCase
         ]);
     }
 
-    #[Test]
     public function changing_sparepart_after_partial_return_is_rejected(): void
     {
         $admin = $this->createAdmin('-change-part');
@@ -388,7 +382,6 @@ class StockFinalTest extends TestCase
         );
     }
 
-    #[Test]
     public function stock_movement_history_is_never_deleted_during_correction(): void
     {
         $admin = $this->createAdmin('-history');
