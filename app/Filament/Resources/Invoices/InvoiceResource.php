@@ -7,7 +7,9 @@ use App\Filament\Resources\Invoices\Pages\ViewInvoice;
 use App\Filament\Resources\Invoices\Tables\InvoicesTable;
 use App\Models\Invoice;
 use BackedEnum;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\RepeatableEntry\TableColumn;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -41,6 +43,13 @@ class InvoiceResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
+
+            /*
+            |--------------------------------------------------------------------------
+            | Informasi Invoice
+            |--------------------------------------------------------------------------
+            */
+
             Section::make('Informasi Invoice')
                 ->schema([
                     TextEntry::make('invoice_number')
@@ -69,6 +78,12 @@ class InvoiceResource extends Resource
                 ])
                 ->columns(2),
 
+            /*
+            |--------------------------------------------------------------------------
+            | Customer & Trip
+            |--------------------------------------------------------------------------
+            */
+
             Section::make('Customer & Trip')
                 ->schema([
                     TextEntry::make('customer.name')
@@ -78,6 +93,69 @@ class InvoiceResource extends Resource
                         ->label('No. Trip'),
                 ])
                 ->columns(2),
+
+            /*
+            |--------------------------------------------------------------------------
+            | Detail Tagihan
+            |--------------------------------------------------------------------------
+            */
+
+            Section::make('Detail Tagihan')
+                ->schema([
+                    RepeatableEntry::make('items')
+                        ->label('')
+                        ->table([
+                            TableColumn::make('Unit'),
+                            TableColumn::make('Repair'),
+                            TableColumn::make('Qty'),
+                            TableColumn::make('Harga'),
+                            TableColumn::make('Subtotal'),
+                        ])
+                        ->schema([
+                            TextEntry::make('unit.imei')
+                                ->label('Unit')
+                                ->placeholder('-'),
+
+                            TextEntry::make('description')
+                                ->label('Repair')
+                                ->placeholder('-'),
+
+                            TextEntry::make('quantity')
+                                ->label('Qty')
+                                ->numeric(0),
+
+                            TextEntry::make('unit_price')
+                                ->label('Harga')
+                                ->money('IDR'),
+
+                            TextEntry::make('subtotal')
+                                ->label('Subtotal')
+                                ->money('IDR'),
+                        ])
+                        ->columns(5),
+                ]),
+
+            /*
+            |--------------------------------------------------------------------------
+            | Total
+            |--------------------------------------------------------------------------
+            */
+
+            Section::make('Total Tagihan')
+                ->schema([
+                    TextEntry::make('total')
+                        ->label('TOTAL')
+                        ->money('IDR')
+                        ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                        ->size(\Filament\Support\Enums\TextSize::Large),
+                ])
+                ->columns(1),
+
+            /*
+            |--------------------------------------------------------------------------
+            | Catatan
+            |--------------------------------------------------------------------------
+            */
 
             Section::make('Catatan')
                 ->schema([
