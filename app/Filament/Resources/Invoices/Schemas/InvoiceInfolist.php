@@ -11,6 +11,27 @@ class InvoiceInfolist
     {
         return $schema
             ->components([
+                Section::make('Status Pembayaran & Pengambilan')
+                    ->schema([
+                        TextEntry::make('status')
+                            ->label('Status Invoice')
+                            ->badge(),
+
+                        TextEntry::make('paid_at')
+                            ->label('Dibayar Pada')
+                            ->dateTime('d M Y H:i')
+                            ->placeholder('Belum dibayar'),
+
+                        TextEntry::make('picked_up_at')
+                            ->label('Diambil Pada')
+                            ->dateTime('d M Y H:i')
+                            ->placeholder('Belum diambil'),
+
+                        TextEntry::make('pickedUpBy.name')
+                            ->label('Diambil Oleh')
+                            ->placeholder('-'),
+                    ])
+                    ->columns(2),
                 TextEntry::make('id')
                     ->label('ID'),
                 TextEntry::make('customer.name')

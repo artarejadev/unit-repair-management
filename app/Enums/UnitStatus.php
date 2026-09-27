@@ -9,6 +9,7 @@ enum UnitStatus: string
     case SELESAI = 'SELESAI';
     case DITAGIHKAN = 'DITAGIHKAN';
     case DIAMBIL = 'DIAMBIL';
+    case REWORK = 'REWORK';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum UnitStatus: string
             self::SELESAI => 'Selesai',
             self::DITAGIHKAN => 'Ditagihkan',
             self::DIAMBIL => 'Diambil',
+            self::REWORK => 'Rework',
         };
     }
 }

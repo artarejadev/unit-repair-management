@@ -23,9 +23,22 @@ class TechnicianUnitWorkflowService
                 );
             }
 
-            if ($unit->status !== UnitStatus::PENDING) {
+            // if ($unit->status !== UnitStatus::PENDING) {
+            //     throw new RuntimeException(
+            //         'Unit hanya dapat dimulai dari status PENDING.'
+            //     );
+            // }
+
+            if (! in_array(
+                $unit->status,
+                [
+                    UnitStatus::PENDING,
+                    UnitStatus::REWORK,
+                ],
+                true
+            )) {
                 throw new RuntimeException(
-                    'Unit hanya dapat dimulai dari status PENDING.'
+                    'Unit hanya dapat dimulai dari status PENDING atau REWORK.'
                 );
             }
 

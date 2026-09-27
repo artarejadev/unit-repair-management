@@ -8,6 +8,8 @@ use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
+use App\Enums\UnitStatus;
+
 class UnitsTable
 {
     public static function configure(Table $table): Table
@@ -22,7 +24,16 @@ class UnitsTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->sortable(),
+                    ->formatStateUsing(
+                        fn (UnitStatus $state) => match ($state) {
+                            UnitStatus::PENDING => 'Pending',
+                            UnitStatus::PROSES => 'Proses',
+                            UnitStatus::SELESAI => 'Selesai',
+                            UnitStatus::DITAGIHKAN => 'Ditagihkan',
+                            UnitStatus::DIAMBIL => 'Sudah Diambil',
+                            UnitStatus::REWORK => 'Rework',
+                        }
+                    ),
 
                 TextColumn::make('customer.name')
                     ->label('Customer')

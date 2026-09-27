@@ -27,7 +27,11 @@ class BillingService
             $units = Unit::query()
                 ->where('trip_id', $trip->id)
                 ->where('status', UnitStatus::SELESAI)
-                ->whereDoesntHave('invoiceUnit')
+                ->whereDoesntHave('invoiceUnits', function ($query) {
+                    $query->whereHas('invoice', function ($invoiceQuery) {
+                        $invoiceQuery->where('status', '!=', 'CANCELED');
+                    });
+                })
                 ->with([
                     'repairs.repairType',
                 ])

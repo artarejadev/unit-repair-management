@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 use App\Models\User;
+use App\Models\InvoiceUnit;
 
 class Unit extends Model
 {
@@ -59,6 +60,11 @@ class Unit extends Model
     public function invoiceUnit(): HasOne
     {
         return $this->hasOne(InvoiceUnit::class);
+    }
+
+    public function invoiceUnits(): HasMany
+    {
+        return $this->hasMany(InvoiceUnit::class);
     }
 
     public function currentAssignment(): HasOne

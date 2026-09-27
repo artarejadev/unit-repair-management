@@ -72,6 +72,19 @@ class InvoiceResource extends Resource
                         ->dateTime('d/m/Y H:i')
                         ->placeholder('-'),
 
+                    TextEntry::make('canceled_at')
+                        ->label('Dibatalkan')
+                        ->dateTime('d/m/Y H:i')
+                        ->placeholder('-'),
+
+                    TextEntry::make('cancel_reason')
+                        ->label('Alasan Pembatalan')
+                        ->placeholder('-'),
+
+                    TextEntry::make('canceledBy.name')
+                        ->label('Dibatalkan Oleh')
+                        ->placeholder('-'),
+
                     TextEntry::make('total')
                         ->label('Total')
                         ->money('IDR'),

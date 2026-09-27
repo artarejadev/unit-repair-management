@@ -43,10 +43,14 @@ class Trip extends Model
         return $this->hasMany(Invoice::class);
     }
 
-    public function billingUnits()
+    public function billingUnits(): HasMany
     {
         return $this->hasMany(Unit::class)
             ->where('status', UnitStatus::SELESAI)
-            ->whereDoesntHave('invoiceUnit');
+            ->whereDoesntHave('invoiceUnits', function ($query) {
+                $query->whereHas('invoice', function ($invoiceQuery) {
+                    $invoiceQuery->where('status', '!=', 'CANCELED');
+                });
+            });
     }
 }
