@@ -181,4 +181,9 @@ class TechnicianPerformanceResource extends Resource
             'index' => \App\Filament\Resources\TechnicianPerformances\Pages\ListTechnicianPerformances::route('/'),
         ];
     }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isAdmin() === true;
+    }
 }

@@ -241,4 +241,9 @@ class TripFinancialReportResource extends Resource
             'index' => Pages\ListTripFinancialReports::route('/'),
         ];
     }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isAdmin() === true;
+    }
 }
