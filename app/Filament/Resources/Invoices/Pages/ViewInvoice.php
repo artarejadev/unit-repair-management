@@ -56,7 +56,7 @@ class ViewInvoice extends ViewRecord
                 ->modalSubmitActionLabel('Batalkan Invoice')
                 ->visible(
                     fn (Invoice $record): bool =>
-                        $record->status === Invoice::STATUS_ISSUED
+                        $record->status === InvoiceStatus::ISSUED
                 )
                 ->action(function (
                     Invoice $record,
