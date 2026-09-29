@@ -5,8 +5,6 @@ namespace App\Policies;
 use App\Models\Unit;
 use App\Models\User;
 
-use App\Enums\UnitStatus;
-
 class UnitPolicy
 {
     public function viewAny(User $user): bool
@@ -42,11 +40,5 @@ class UnitPolicy
     public function deleteAny(User $user): bool
     {
         return $user->isAdmin();
-    }
-
-    public function markAsPickedUp(User $user, Unit $unit): bool
-    {
-        return $user->isAdmin()
-            && $unit->status === UnitStatus::DITAGIHKAN;
     }
 }

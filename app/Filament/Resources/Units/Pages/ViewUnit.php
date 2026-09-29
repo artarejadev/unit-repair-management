@@ -10,7 +10,6 @@ use App\Services\Units\TechnicianUnitWorkflowService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use App\Models\Unit;
-use App\Services\UnitPickupService;
 
 class ViewUnit extends ViewRecord
 {
@@ -47,27 +46,6 @@ class ViewUnit extends ViewRecord
                     )
                     ->send();
             });
-
-        $actions[] = Action::make('markAsPickedUp')
-            ->label('Tandai Sudah Diambil')
-            ->icon('heroicon-o-check-circle')
-            ->color('success')
-            ->visible(fn (Unit $record) =>
-                auth()->user()?->isAdmin()
-                && $record->status === UnitStatus::DITAGIHKAN
-            )
-            ->requiresConfirmation()
-            ->modalHeading('Tandai Unit Sudah Diambil')
-            ->modalDescription(
-                'Pastikan unit benar-benar sudah diserahkan kepada customer sebelum melanjutkan.'
-            )
-            ->action(function (Unit $record): void {
-                app(UnitPickupService::class)->markAsPickedUp(
-                    $record,
-                    auth()->user()
-                );
-            })
-            ->successNotificationTitle('Unit berhasil ditandai sudah diambil');
 
         if (auth()->user()?->isTechnician()) {
             $actions[] = Action::make('start')
